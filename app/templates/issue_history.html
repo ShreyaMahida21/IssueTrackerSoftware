@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>History for {{ issue_title }}</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Changed By</th>
+        <th>Description</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in history %}
+      <tr>
+        <td>{{ entry.changed_by }}</td>
+        <td>{{ entry.change_description }}</td>
+        <td>{{ entry.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{{ url_for('main.track_issues') }}" class="btn btn-secondary">Back</a>
+</div>
+{% endblock %}
