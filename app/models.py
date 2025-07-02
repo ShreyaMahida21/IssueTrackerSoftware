@@ -1,13 +1,22 @@
 """
-models.py
-
-Defines User class for Flask-Login.
+Minimal user class with inheritance for Flask-Login.
 """
 
 from flask_login import UserMixin
 
-class User(UserMixin):
-    def __init__(self, user_doc):
-        self.id = str(user_doc['_id'])
-        self.username = user_doc['username']
-        self.role = user_doc['role']
+class BaseModel:
+    """Base model to show basic inheritance."""
+    def __init__(self):
+        pass
+
+class User(UserMixin, BaseModel):
+    """
+    User model for Flask-Login.
+    Demonstrates simple inheritance.
+    """
+    def __init__(self, id, username, password, role):
+        super().__init__()
+        self.id = id
+        self.username = username
+        self.password = password
+        self.role = role

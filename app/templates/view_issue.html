@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>View Issue</h2>
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">{{ issue[1] }}</h5>
+    <p><strong>Description:</strong> {{ issue[2] }}</p>
+    <p><strong>Status:</strong> {{ issue[3] }}</p>
+    <p><strong>Priority:</strong> {{ issue[4] }}</p>
+    <p><strong>Type:</strong> {{ issue[5] }}</p>
+    <p><strong>Created By:</strong> {{ issue[6] }}</p>
+    <p><strong>Assigned To:</strong> {{ issue[7] }}</p>
+  </div>
+</div>
+{% endblock %}

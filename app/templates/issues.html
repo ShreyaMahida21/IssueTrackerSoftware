@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>All Issues</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Type</th>
+            <th>Created By</th>
+            <th>Assigned To</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for issue in issues %}
+        <tr>
+            <td>{{ issue['id'] }}</td>
+            <td>{{ issue['title'] }}</td>
+            <td>{{ issue['status'] }}</td>
+            <td>{{ issue['priority'] }}</td>
+            <td>{{ issue['type'] }}</td>
+            <td>{{ issue['created_by'] }}</td>
+            <td>{{ issue['assigned_to'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

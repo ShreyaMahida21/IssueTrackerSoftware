@@ -1,114 +1,25 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
-  <h2>Manage Users</h2>
-
-  <!-- Create User Button -->
-  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#createUserModal">
-    ➕ Create User
-  </button>
-
-  <!-- Users Table -->
-  <table class="table table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Role</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>{{ user._id }}</td>
-        <td>{{ user.username }}</td>
-        <td>{{ user.role }}</td>
-        <td>
-          <!-- Edit Button -->
-          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user._id }}">Edit</button>
-
-          <!-- Delete Form -->
-          <form method="POST" action="{{ url_for('main.delete_user', user_id=user._id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-          </form>
-        </td>
-      </tr>
-
-      <!-- Edit User Modal -->
-      <div class="modal fade" id="editUserModal{{ user._id }}" tabindex="-1">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <form method="POST" action="{{ url_for('main.update_user', user_id=user._id) }}">
-              <div class="modal-header">
-                <h5 class="modal-title">Edit User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label class="form-label">Username</label>
-                  <input type="text" class="form-control" value="{{ user.username }}" disabled>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Role</label>
-                  <select name="role" class="form-select">
-                    <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
-                    <option value="User" {% if user.role == 'User' %}selected{% endif %}>User</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">New Password</label>
-                  <input type="password" class="form-control" name="new_password" placeholder="Leave blank to keep current password">
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Save Changes</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<!-- Create User Modal -->
-<div class="modal fade" id="createUserModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="POST" action="{{ url_for('main.create_user') }}">
-        <div class="modal-header">
-          <h5 class="modal-title">Create User</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Role</label>
-            <select name="role" class="form-select" required>
-              <option value="Admin">Admin</option>
-              <option value="User" selected>User</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Create User</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
+<h2>Manage Users</h2>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Role</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user[1] }}</td>
+      <td>{{ user[3] }}</td>
+      <td>
+        <a href="{{ url_for('main.edit_user', user_id=user[0]) }}" class="btn btn-warning btn-sm">Edit</a>
+        <a href="{{ url_for('main.delete_user', user_id=user[0]) }}" class="btn btn-danger btn-sm">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

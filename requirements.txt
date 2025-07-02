@@ -1,9 +1,4 @@
-flask
-flask_sqlalchemy
-flask_login
-flask_migrate
+Flask
+Flask-Login
+Flask-SQLAlchemy
 python-dotenv
-psycopg2-binary
-flask_wtf
-wtforms
-email-validator

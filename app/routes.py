@@ -1,207 +1,179 @@
 """
-routes.py
-
-Dashboard, issue management, and user management routes.
+Routes for Issue Tracker with SQLite.
+Includes:
+ - Dashboard
+ - Create Issue
+ - Track Issues (View, Edit, Delete)
+ - Issue History (View Only)
+ - Manage Users (Edit Password, Delete)
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from bson.objectid import ObjectId
-from datetime import datetime
-from . import mongo
+from db import get_db
 
 main = Blueprint('main', __name__)
 
-
-# -------------------------------
-# 🏠 DASHBOARD
-# -------------------------------
+# ---------------- Dashboard ----------------
 @main.route('/')
 @login_required
 def home():
-    """Dashboard showing counts"""
-    total_users = mongo.db.users.count_documents({})
-    total_issues = mongo.db.issues.count_documents({})
-    open_issues = mongo.db.issues.count_documents({'status': 'Open'})
-    in_progress_issues = mongo.db.issues.count_documents({'status': 'In Progress'})
-    resolved_issues = mongo.db.issues.count_documents({'status': 'Resolved'})
-
+    """ Dashboard showing stats """
+    conn = get_db()
+    cur = conn.cursor()
+    total_users = cur.execute('SELECT COUNT(*) FROM users').fetchone()[0]
+    total_issues = cur.execute('SELECT COUNT(*) FROM issues').fetchone()[0]
+    open_issues = cur.execute('SELECT COUNT(*) FROM issues WHERE status = ?', ('Open',)).fetchone()[0]
+    closed_issues = cur.execute('SELECT COUNT(*) FROM issues WHERE status = ?', ('Resolved',)).fetchone()[0]
+    conn.close()
     return render_template(
         'home.html',
         total_users=total_users,
         total_issues=total_issues,
         open_issues=open_issues,
-        in_progress_issues=in_progress_issues,
-        resolved_issues=resolved_issues
+        closed_issues=closed_issues
     )
 
 
-# -------------------------------
-# 🟢 CREATE ISSUE
-# -------------------------------
+# ---------------- Create Issue ----------------
 @main.route('/create_issue', methods=['GET', 'POST'])
 @login_required
 def create_issue():
-    """Create a new issue"""
+    """ Create new issue """
+    conn = get_db()
+    cur = conn.cursor()
+    users = cur.execute('SELECT username FROM users').fetchall()
+    user_list = [u[0] for u in users]
+
     if request.method == 'POST':
-        issue = {
-            "title": request.form['title'],
-            "description": request.form['description'],
-            "status": request.form['status'],
-            "priority": request.form['priority'],
-            "type": request.form['type'],
-            "created_by": current_user.username,
-            "assigned_to": request.form['assigned_to']
-        }
-        mongo.db.issues.insert_one(issue)
-        flash('✅ Issue created successfully!', 'success')
+        title = request.form['title']
+        description = request.form['description']
+        priority = request.form['priority']
+        issue_type = request.form['type']
+        assigned_to = request.form['assigned_to']
+
+        try:
+            cur.execute(
+                'INSERT INTO issues (title, description, status, priority, type, created_by, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (title, description, 'Open', priority, issue_type, current_user.username, assigned_to)
+            )
+            conn.commit()
+            flash('Issue created successfully!', 'success')
+        except Exception as e:
+            flash(f'Error creating issue: {e}', 'danger')
+        finally:
+            conn.close()
         return redirect(url_for('main.create_issue'))
 
-    # Get usernames for "Assigned To"
-    users_cursor = mongo.db.users.find({}, {"username": 1})
-    users = [user['username'] for user in users_cursor]
-
-    return render_template('create_issue.html', users=users)
+    conn.close()
+    return render_template('create_issue.html', users=user_list)
 
 
-# -------------------------------
-# 📋 TRACK ISSUES
-# -------------------------------
+# ---------------- Track Issues ----------------
 @main.route('/track_issues')
 @login_required
 def track_issues():
-    """Track all issues with pagination"""
-    page = int(request.args.get('page', 1))
-    per_page = 10
-    skip = (page - 1) * per_page
-
-    total_issues = mongo.db.issues.count_documents({})
-    issues = list(mongo.db.issues.find().skip(skip).limit(per_page))
-
-    has_next = total_issues > page * per_page
-    has_prev = page > 1
-
-    return render_template(
-        'track_issues.html',
-        issues=issues,
-        page=page,
-        has_next=has_next,
-        has_prev=has_prev
-    )
+    """ List all issues (all statuses) """
+    conn = get_db()
+    cur = conn.cursor()
+    issues = cur.execute('SELECT * FROM issues').fetchall()
+    conn.close()
+    return render_template('track_issues.html', issues=issues)
 
 
-# -------------------------------
-# 📝 UPDATE ISSUE
-# -------------------------------
-@main.route('/update_issue/<issue_id>', methods=['POST'])
+@main.route('/view_issue/<int:issue_id>')
 @login_required
-def update_issue(issue_id):
-    """Update an issue and add to history"""
-    issue = mongo.db.issues.find_one({'_id': ObjectId(issue_id)})
-    old_status = issue['status']
-
-    new_status = request.form['status']
-    new_priority = request.form['priority']
-    new_assigned_to = request.form['assigned_to']
-
-    mongo.db.issues.update_one(
-        {'_id': ObjectId(issue_id)},
-        {'$set': {
-            'status': new_status,
-            'priority': new_priority,
-            'assigned_to': new_assigned_to
-        }}
-    )
-
-    change = {
-        'issue_title': issue['title'],
-        'changed_by': current_user.username,
-        'change_description': f'Status changed from {old_status} to {new_status}',
-        'timestamp': datetime.utcnow()
-    }
-    mongo.db.issue_history.insert_one(change)
-
-    flash('✅ Issue updated successfully!', 'success')
-    return redirect(url_for('main.track_issues'))
+def view_issue(issue_id):
+    """ View details for an issue """
+    conn = get_db()
+    cur = conn.cursor()
+    issue = cur.execute('SELECT * FROM issues WHERE id = ?', (issue_id,)).fetchone()
+    conn.close()
+    return render_template('view_issue.html', issue=issue)
 
 
-# -------------------------------
-# ❌ DELETE ISSUE
-# -------------------------------
-@main.route('/delete_issue/<issue_id>', methods=['POST'])
+@main.route('/edit_issue/<int:issue_id>', methods=['GET', 'POST'])
+@login_required
+def edit_issue(issue_id):
+    """ Edit an issue """
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        status = request.form['status']
+        priority = request.form['priority']
+        cur.execute(
+            'UPDATE issues SET title=?, description=?, status=?, priority=? WHERE id=?',
+            (title, description, status, priority, issue_id)
+        )
+        conn.commit()
+        conn.close()
+        flash('Issue updated!', 'success')
+        return redirect(url_for('main.track_issues'))
+
+    issue = cur.execute('SELECT * FROM issues WHERE id = ?', (issue_id,)).fetchone()
+    conn.close()
+    return render_template('edit_issue.html', issue=issue)
+
+
+@main.route('/delete_issue/<int:issue_id>')
 @login_required
 def delete_issue(issue_id):
-    """Delete an issue"""
-    mongo.db.issues.delete_one({'_id': ObjectId(issue_id)})
-    flash('❌ Issue deleted!', 'success')
+    """ Delete an issue """
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM issues WHERE id = ?', (issue_id,))
+    conn.commit()
+    conn.close()
+    flash('Issue deleted!', 'info')
     return redirect(url_for('main.track_issues'))
 
 
-# -------------------------------
-# 📜 ISSUE HISTORY
-# -------------------------------
-@main.route('/issue_history/<issue_title>')
-@login_required
-def issue_history(issue_title):
-    """View issue history"""
-    history = list(mongo.db.issue_history.find({'issue_title': issue_title}))
-    return render_template('issue_history.html', history=history, issue_title=issue_title)
 
 
-# -------------------------------
-# 👤 USER MANAGEMENT
-# -------------------------------
-@main.route('/users')
+
+# ---------------- Manage Users ----------------
+@main.route('/manage_users')
 @login_required
 def manage_users():
-    """List all users"""
-    users = list(mongo.db.users.find())
+    """ Show all users """
+    conn = get_db()
+    cur = conn.cursor()
+    users = cur.execute('SELECT * FROM users').fetchall()
+    conn.close()
     return render_template('manage_users.html', users=users)
 
 
-@main.route('/create_user', methods=['POST'])
+@main.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-def create_user():
-    """Create new user"""
-    username = request.form['username']
-    password = request.form['password']  # Plain text for now
-    role = request.form['role']
+def edit_user(user_id):
+    """ Edit user password """
+    conn = get_db()
+    cur = conn.cursor()
 
-    mongo.db.users.insert_one({
-        'username': username,
-        'password': password,
-        'role': role
-    })
+    if request.method == 'POST':
+        new_password = request.form['password']
+        cur.execute('UPDATE users SET password = ? WHERE id = ?', (new_password, user_id))
+        conn.commit()
+        conn.close()
+        flash('User password updated.', 'success')
+        return redirect(url_for('main.manage_users'))
 
-    flash('✅ User created successfully!', 'success')
-    return redirect(url_for('main.manage_users'))
-
-
-@main.route('/update_user/<user_id>', methods=['POST'])
-@login_required
-def update_user(user_id):
-    """Update user role and password"""
-    role = request.form['role']
-    new_password = request.form['new_password']
-
-    update_fields = {'role': role}
-
-    if new_password.strip():
-        update_fields['password'] = new_password
-
-    mongo.db.users.update_one(
-        {'_id': ObjectId(user_id)},
-        {'$set': update_fields}
-    )
-
-    flash('✅ User updated successfully!', 'success')
-    return redirect(url_for('main.manage_users'))
+    user = cur.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    return render_template('edit_user.html', user=user)
 
 
-@main.route('/delete_user/<user_id>', methods=['POST'])
+@main.route('/delete_user/<int:user_id>')
 @login_required
 def delete_user(user_id):
-    """Delete a user"""
-    mongo.db.users.delete_one({'_id': ObjectId(user_id)})
-    flash('❌ User deleted!', 'success')
+    """ Delete user """
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM users WHERE id = ?', (user_id,))
+    conn.commit()
+    conn.close()
+    flash('User deleted.', 'info')
     return redirect(url_for('main.manage_users'))

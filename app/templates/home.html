@@ -1,52 +1,38 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block content %}
-<h2 class="mb-4">Dashboard</h2>
-
+<h2>Home</h2>
 <div class="row">
-  <div class="col-md-3">
-    <div class="card text-bg-primary mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Total Users</h5>
-        <p class="card-text display-6">{{ total_users }}</p>
-      </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <p class="card-text">{{ total_users }}</p>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card text-bg-info mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Total Issues</h5>
-        <p class="card-text display-6">{{ total_issues }}</p>
-      </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Total Issues</h5>
+                <p class="card-text">{{ total_issues }}</p>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card text-bg-warning mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Open Issues</h5>
-        <p class="card-text display-6">{{ open_issues }}</p>
-      </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Open Issues</h5>
+                <p class="card-text">{{ open_issues }}</p>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card text-bg-secondary mb-3">
-      <div class="card-body">
-        <h5 class="card-title">In Progress</h5>
-        <p class="card-text display-6">{{ in_progress_issues }}</p>
-      </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Closed Issues</h5>
+                <p class="card-text">{{ closed_issues }}</p>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card text-bg-success mb-3">
-      <div class="card-body">
-        <h5 class="card-title">Resolved Issues</h5>
-        <p class="card-text display-6">{{ resolved_issues }}</p>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}
