@@ -1,6 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
+
 <h2>Track Issues</h2>
+
+<form method="POST" class="mb-3">
+  <div class="input-group input-group-sm" style="max-width: 300px;">
+    <input type="text" name="search_query" class="form-control" placeholder="Search issues..." value="{{ search_query or '' }}">
+    <button class="btn btn-outline-primary" type="submit">Search</button>
+  </div>
+</form>
+
+
 <table class="table table-striped">
   <thead>
     <tr>
@@ -27,4 +37,5 @@
     {% endfor %}
   </tbody>
 </table>
+
 {% endblock %}

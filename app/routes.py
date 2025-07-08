@@ -4,13 +4,13 @@ Includes:
  - Dashboard
  - Create Issue
  - Track Issues (View, Edit, Delete)
- - Issue History (View Only)
- - Manage Users (Edit Password, Delete)
+ - Manage Users (Role Edit, Delete for Super Admin)
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from db import get_db
+import re
 
 main = Blueprint('main', __name__)
 
@@ -18,7 +18,6 @@ main = Blueprint('main', __name__)
 @main.route('/')
 @login_required
 def home():
-    """ Dashboard showing stats """
     conn = get_db()
     cur = conn.cursor()
     total_users = cur.execute('SELECT COUNT(*) FROM users').fetchone()[0]
@@ -34,12 +33,10 @@ def home():
         closed_issues=closed_issues
     )
 
-
 # ---------------- Create Issue ----------------
 @main.route('/create_issue', methods=['GET', 'POST'])
 @login_required
 def create_issue():
-    """ Create new issue """
     conn = get_db()
     cur = conn.cursor()
     users = cur.execute('SELECT username FROM users').fetchall()
@@ -68,34 +65,47 @@ def create_issue():
     conn.close()
     return render_template('create_issue.html', users=user_list)
 
-
 # ---------------- Track Issues ----------------
-@main.route('/track_issues')
+@main.route('/track_issues', methods=['GET', 'POST'])
 @login_required
 def track_issues():
-    """ List all issues (all statuses) """
+    """ List all issues, supports regex search """
     conn = get_db()
+
+    def regexp(expr, item):
+        if item is None:
+            return False
+        return re.search(expr, item, re.IGNORECASE) is not None
+
+    conn.create_function("REGEXP", 2, regexp)
     cur = conn.cursor()
-    issues = cur.execute('SELECT * FROM issues').fetchall()
+
+    search_query = request.form.get('search_query', '').strip()
+
+    if search_query:
+        issues = cur.execute(
+            "SELECT * FROM issues WHERE title REGEXP ? OR description REGEXP ?",
+            (search_query, search_query)
+        ).fetchall()
+    else:
+        issues = cur.execute('SELECT * FROM issues').fetchall()
+
     conn.close()
-    return render_template('track_issues.html', issues=issues)
+    return render_template('track_issues.html', issues=issues, search_query=search_query)
 
-
+# ---------------- Issue Detail/Edit/Delete ----------------
 @main.route('/view_issue/<int:issue_id>')
 @login_required
 def view_issue(issue_id):
-    """ View details for an issue """
     conn = get_db()
     cur = conn.cursor()
     issue = cur.execute('SELECT * FROM issues WHERE id = ?', (issue_id,)).fetchone()
     conn.close()
     return render_template('view_issue.html', issue=issue)
 
-
 @main.route('/edit_issue/<int:issue_id>', methods=['GET', 'POST'])
 @login_required
 def edit_issue(issue_id):
-    """ Edit an issue """
     conn = get_db()
     cur = conn.cursor()
 
@@ -117,11 +127,9 @@ def edit_issue(issue_id):
     conn.close()
     return render_template('edit_issue.html', issue=issue)
 
-
 @main.route('/delete_issue/<int:issue_id>')
 @login_required
 def delete_issue(issue_id):
-    """ Delete an issue """
     conn = get_db()
     cur = conn.cursor()
     cur.execute('DELETE FROM issues WHERE id = ?', (issue_id,))
@@ -130,50 +138,48 @@ def delete_issue(issue_id):
     flash('Issue deleted!', 'info')
     return redirect(url_for('main.track_issues'))
 
-
-
-
-
 # ---------------- Manage Users ----------------
 @main.route('/manage_users')
 @login_required
 def manage_users():
-    """ Show all users """
     conn = get_db()
     cur = conn.cursor()
     users = cur.execute('SELECT * FROM users').fetchall()
     conn.close()
     return render_template('manage_users.html', users=users)
 
-
-@main.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@main.route('/update-user-role/<int:user_id>', methods=['POST'])
 @login_required
-def edit_user(user_id):
-    """ Edit user password """
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == 'POST':
-        new_password = request.form['password']
-        cur.execute('UPDATE users SET password = ? WHERE id = ?', (new_password, user_id))
-        conn.commit()
-        conn.close()
-        flash('User password updated.', 'success')
+def update_user_role(user_id):
+    if current_user.role != 'superadmin':
+        flash("Unauthorized access", "danger")
         return redirect(url_for('main.manage_users'))
 
-    user = cur.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    conn.close()
-    return render_template('edit_user.html', user=user)
-
-
-@main.route('/delete_user/<int:user_id>')
-@login_required
-def delete_user(user_id):
-    """ Delete user """
+    new_role = request.form['role']
     conn = get_db()
     cur = conn.cursor()
-    cur.execute('DELETE FROM users WHERE id = ?', (user_id,))
+    cur.execute("UPDATE users SET role = ? WHERE id = ?", (new_role, user_id))
     conn.commit()
     conn.close()
-    flash('User deleted.', 'info')
+    flash("User role updated successfully.", "success")
+    return redirect(url_for('main.manage_users'))
+
+@main.route('/delete-user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'superadmin':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('main.manage_users'))
+
+    # Prevent superadmin from deleting themselves
+    if user_id == current_user.id:
+        flash("You cannot delete yourself!", "warning")
+        return redirect(url_for('main.manage_users'))
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    flash("User deleted successfully.", "success")
     return redirect(url_for('main.manage_users'))
