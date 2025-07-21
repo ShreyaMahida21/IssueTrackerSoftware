@@ -20,3 +20,17 @@ class User(UserMixin, BaseModel):
         self.username = username
         self.password = password
         self.role = role
+class Issue(BaseModel):
+    """
+    Issue model that represents a bug/feature/task in the tracker.
+    """
+    def __init__(self, id, title, description, status, priority, type, created_by, assigned_to):
+        super().__init__()
+        self.id = id
+        self.title = title
+        self.description = description
+        self.status = status
+        self.priority = priority
+        self.type = type
+        self.created_by = created_by
+        self.assigned_to = assigned_to

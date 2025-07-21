@@ -20,37 +20,16 @@ It lets **Admins**, **Users**, and **Super Admins** register, login, create, ass
 ### 1️⃣ Clone this repository
 
 ```bash
-git clone https://github.com/yourusername/issue-tracker.git
+1 git clone https://github.com/yourusername/issue-tracker.git
 cd issue-tracker
-2️⃣ Create a virtual environment
+2️ Create a virtual environment
 Windows:
 python -m venv venv
 venv\Scripts\activate
-3️⃣ Install dependencies
+3️ Install dependencies
 bash
 
 pip install -r requirements.txt
-4️⃣ Set up your environment variables
-Create a .env file in the root of your project with:
 
-env
-
-MONGO_URI=mongodb://localhost:27017/issuetrackerdb
-SECRET_KEY=your_secret_key_here
-✅ Replace your_secret_key_here with any random string for session security.
-✅ Replace MONGO_URI if you’re using MongoDB Atlas instead of local.
-
-5️⃣ Set up your MongoDB database
-Start MongoDB (if local).
-
-Use MongoDB Compass or DBeaver to connect.
-
-Create a new database called: issuetrackerdb
-
-Create these collections:
-
-users
-
-issues
-6️⃣ Run the Flask app
+4  Run the Flask app
 python run.py

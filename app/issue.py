@@ -46,9 +46,9 @@ def view_issue(issue_id):
 @issue.route('/issues/edit/<int:issue_id>', methods=['GET', 'POST'])
 @login_required
 def edit_issue(issue_id):
-    if current_user.role not in ['admin', 'superadmin']:
-        flash("Unauthorized.", "danger")
-        return redirect(url_for('issue.track_issues'))
+    # if current_user.role not in ['admin', 'superadmin']:
+    #     flash("Unauthorized.", "danger")
+    #     return redirect(url_for('issue.track_issues'))
 
     conn = get_db()
     cur = conn.cursor()
@@ -74,9 +74,9 @@ def edit_issue(issue_id):
 @issue.route('/issues/delete/<int:issue_id>', methods=['GET'])
 @login_required
 def delete_issue(issue_id):
-    if current_user.role not in ['admin', 'superadmin']:
-        flash("Unauthorized.", "danger")
-        return redirect(url_for('issue.track_issues'))
+    # if current_user.role not in ['admin', 'superadmin']:
+    #     flash("Unauthorized.", "danger")
+    #     return redirect(url_for('issue.track_issues'))
 
     conn = get_db()
     cur = conn.cursor()
