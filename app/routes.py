@@ -23,7 +23,7 @@ def home():
     total_users = cur.execute('SELECT COUNT(*) FROM users').fetchone()[0]
     total_issues = cur.execute('SELECT COUNT(*) FROM issues').fetchone()[0]
     open_issues = cur.execute('SELECT COUNT(*) FROM issues WHERE status = ?', ('Open',)).fetchone()[0]
-    closed_issues = cur.execute('SELECT COUNT(*) FROM issues WHERE status = ?', ('Resolved',)).fetchone()[0]
+    closed_issues = cur.execute('SELECT COUNT(*) FROM issues WHERE status = ?', ('Closed',)).fetchone()[0]
     conn.close()
     return render_template(
         'home.html',
@@ -132,11 +132,31 @@ def edit_issue(issue_id):
 def delete_issue(issue_id):
     conn = get_db()
     cur = conn.cursor()
+
+    # Fetch status of the issue
+    cur.execute('SELECT status FROM issues WHERE id = ?', (issue_id,))
+    result = cur.fetchone()
+
+    if not result:
+        flash('Issue not found.', 'danger')
+        conn.close()
+        return redirect(url_for('main.track_issues'))
+
+    status = result[0].strip().lower()
+
+    if status == 'closed':
+        flash('Closed issues cannot be deleted.', 'warning')
+        conn.close()
+        return redirect(url_for('main.track_issues'))
+
+    # Proceed to delete if not closed
     cur.execute('DELETE FROM issues WHERE id = ?', (issue_id,))
     conn.commit()
     conn.close()
+    
     flash('Issue deleted!', 'info')
     return redirect(url_for('main.track_issues'))
+
 
 # ---------------- Manage Users ----------------
 @main.route('/manage_users')
