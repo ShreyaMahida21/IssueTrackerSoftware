@@ -1,6 +1,6 @@
-# 🐍 Issue Tracker — Python Flask + MongoDB
+# 🐍 Issue Tracker — Python Flask + SQLITE
 
-This is an **Issue Tracking System** built with **Python**, **Flask**, and **MongoDB**.  
+This is an **Issue Tracking System** built with **Python**, **Flask**, and **SQLITE**.  
 It lets **Admins**, **Users**, and **Super Admins** register, login, create, assign, track, and resolve issues with ease.
 
 ---
@@ -17,10 +17,10 @@ It lets **Admins**, **Users**, and **Super Admins** register, login, create, ass
 
 ## ⚙️ **How to Run**
 
-### 1️⃣ Clone this repository
+### 1️ Clone this repository
 
 ```bash
-1 git clone https://github.com/yourusername/issue-tracker.git
+git clone https://github.com/yourusername/issue-tracker.git
 cd issue-tracker
 2️ Create a virtual environment
 Windows:
