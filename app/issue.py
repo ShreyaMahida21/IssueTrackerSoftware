@@ -74,18 +74,42 @@ def edit_issue(issue_id):
 @issue.route('/issues/delete/<int:issue_id>', methods=['GET'])
 @login_required
 def delete_issue(issue_id):
-    # if current_user.role not in ['admin', 'superadmin']:
-    #     flash("Unauthorized.", "danger")
-    #     return redirect(url_for('issue.track_issues'))
-
     conn = get_db()
     cur = conn.cursor()
+
+    # Fetch issue status to validate
+    cur.execute("SELECT status FROM issues WHERE id = ?", (issue_id,))
+    result = cur.fetchone()
+
+    if not result or not result[0]:
+        flash("Issue not found or status missing.", "danger")
+        conn.close()
+        return redirect(url_for('issue.track_issues'))
+
+    # Normalize status
+    status = result[0].strip().lower()
+
+    # Disallow deletion if issue is closed
+    if status == 'Closed':
+        flash("Cannot delete a closed issue.", "warning")
+        conn.close()
+        return redirect(url_for('issue.track_issues'))
+
+    # Optional role-based restriction
+    role = current_user.role.strip().lower()
+    if role not in ['admin', 'superadmin']:
+        flash("Unauthorized to delete issue.", "danger")
+        conn.close()
+        return redirect(url_for('issue.track_issues'))
+
+    # Proceed to delete
     cur.execute("DELETE FROM issues WHERE id = ?", (issue_id,))
     conn.commit()
     conn.close()
 
-    flash("Issue deleted.", "success")
+    flash("Issue deleted successfully.", "success")
     return redirect(url_for('issue.track_issues'))
+
 
 
 @issue.route('/issues/create', methods=['GET', 'POST'])

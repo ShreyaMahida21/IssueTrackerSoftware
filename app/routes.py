@@ -151,7 +151,7 @@ def manage_users():
 @main.route('/update-user-role/<int:user_id>', methods=['POST'])
 @login_required
 def update_user_role(user_id):
-    if current_user.role != 'superadmin':
+    if current_user.role =='Super Admin':
         flash("Unauthorized access", "danger")
         return redirect(url_for('main.manage_users'))
 
