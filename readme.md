@@ -1,4 +1,4 @@
-# 🐍 Issue Tracker — Python Flask + SQLITE
+# Issue Tracker — Python Flask + SQLITE
 
 This is an **Issue Tracking System** built with **Python**, **Flask**, and **SQLITE**.  
 It lets **Admins**, **Users**, and **Super Admins** register, login, create, assign, track, and resolve issues with ease.
@@ -33,3 +33,7 @@ pip install -r requirements.txt
 
 4  Run the Flask app
 python run.py
+
+5 Download DB Browser for SQLITE -https://sqlitebrowser.org/dl/
+the standard installer according to pc requirements and to view the database
+Open DB BROWSER FOR SQLITE and open database - open the database file and browse data to view tables from dropdown.
